@@ -7,23 +7,22 @@ const data = reactive({
   resultText: "Please enter your name below 👇",
 })
 
-function greet() {
-  App.Greet(data.name).then(result => {
-    data.resultText = result
+
+function openDialog() {
+  console.log("openDialog")
+  App.OpenFileDialog().then(result => {
+    console.log("result:" + result)
   })
 }
-
 
 </script>
 
 <template>
   <main>
     <div id="result" class="result">{{ data.resultText }}</div>
-    <div id="input" class="input-box">
-      <input id="name" v-model="data.name" autocomplete="off" class="input" type="text"/>
-      <button class="btn" @click="greet">Greet</button>
-    </div>
 
+
+    <button class="btn" @click="openDialog">openDialog</button>
 
   </main>
 
