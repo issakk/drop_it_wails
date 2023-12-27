@@ -4,27 +4,27 @@ import * as App from '../../wailsjs/go/main/App'
 
 const data = reactive({
   name: "",
-  resultText: "Please enter your name below 👇",
+  resultText: null,
 })
 
-function greet() {
-  App.Greet(data.name).then(result => {
-    data.resultText = result
+
+function openDialog() {
+  console.log("openDialog")
+  App.OpenFileDialog().then(result => {
+    result.forEach(i => console.log(i))
+    data.resultText = result;
   })
 }
-
 
 </script>
 
 <template>
   <main>
     <div id="result" class="result">{{ data.resultText }}</div>
-    <div id="input" class="input-box">
-      <input id="name" v-model="data.name" autocomplete="off" class="input" type="text"/>
-      <button class="btn" @click="greet">Greet</button>
+    <div>
+      <textarea cols="30" name="message" rows="10">{{data.resultText}}</textarea>
+      <button class="btn" @click="openDialog">openDialog</button>
     </div>
-
-
   </main>
 
 </template>

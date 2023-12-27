@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/samber/lo"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"os"
+	"path/filepath"
 )
 
 // App struct
@@ -26,7 +29,17 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
-func (a *App) OpenFileDialog() (string, error) {
+func (a *App) OpenFileDialog() []string {
 	fmt.Println("openDialog")
-	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+	path, _ := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+
+	dir, _ := os.ReadDir(path)
+	infos := lo.Map(dir, func(item os.DirEntry, index int) string {
+		info, _ := item.Info()
+
+		return filepath.Join(path, info.Name())
+	})
+
+	return infos
+
 }

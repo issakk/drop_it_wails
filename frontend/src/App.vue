@@ -1,9 +1,10 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'</script>
+import File from "./components/File.vue";</script>
 
 <template>
   <img id="logo" alt="Wails logo" src="./assets/images/logo-universal.png"/>
-  <HelloWorld/>
+  <!--  <HelloWorld/>-->
+  <File/>
 </template>
 
 <style>
