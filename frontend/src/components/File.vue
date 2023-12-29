@@ -1,17 +1,20 @@
 <script setup>
-import {reactive} from 'vue'
+import {reactive, ref} from 'vue'
 import * as App from '../../wailsjs/go/main/App'
+
+const value = ref()
 
 const data = reactive({
   name: "",
   resultText: "Please enter your name below 👇",
+  treeData: []
 })
 
 
 function openDialog() {
   console.log("openDialog")
   App.OpenFileDialog().then(result => {
-    console.log("result:" + result)
+    data.treeData = result;
   })
 }
 
@@ -19,11 +22,19 @@ function openDialog() {
 
 <template>
   <main>
-    <div id="result" class="result">{{ data.resultText }}</div>
+    <div>
 
-
-    <button class="btn" @click="openDialog">openDialog</button>
-
+      <el-tree-select v-model="value" :data="data.treeData" :render-after-expand="false"/>
+      <el-divider content-position="center"/>
+      show checkbox:
+      <el-tree-select
+          v-model="value"
+          :data="data.treeData"
+          :render-after-expand="false"
+          show-checkbo
+      />
+      <button class="btn" @click="openDialog">openDialog</button>
+    </div>
   </main>
 
 </template>

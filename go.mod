@@ -1,4 +1,4 @@
-module changeme
+module dropit
 
 go 1.21
 

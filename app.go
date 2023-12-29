@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"dropit/model"
 	"fmt"
 	"github.com/samber/lo"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"io/fs"
-	"log"
 	"os"
+	"path/filepath"
 )
 
 // App struct
@@ -30,21 +30,14 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
-func (a *App) OpenFileDialog() []fs.FileInfo {
+func (a *App) OpenFileDialog() []model.TreeNode {
 	fmt.Println("openDialog")
 	path, _ := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
 	dir, _ := os.ReadDir(path)
-	infos := lo.Map(dir, func(item os.DirEntry, index int) fs.FileInfo {
-		info, err := item.Info()
-		if err != nil {
-			log.Println(err)
-			return nil
-		}
-		return info
+	return lo.Map(dir, func(item os.DirEntry, index int) model.TreeNode {
+		info, _ := item.Info()
+		filePath := filepath.Join(path, info.Name())
+		return model.TreeNode{Value: filePath, Label: info.Name()}
 	})
-	for _, info := range infos {
-		fmt.Println(info.Name())
-	}
-	return infos
 
 }
