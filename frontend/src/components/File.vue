@@ -7,9 +7,19 @@ const value = ref()
 const data = reactive({
   name: "",
   resultText: "Please enter your name below 👇",
-  treeData: []
+  treeData: [],
+  tableData: [],
+  currentPath: "",
 })
 
+function listFileInfo(path) {
+  console.log("listFiles")
+  console.log(path)
+  App.ListFileInfo(value.value).then(result => {
+    data.tableData = result;
+    data.currentPath = path;
+  })
+}
 
 function openDialog() {
   console.log("openDialog")
@@ -23,17 +33,24 @@ function openDialog() {
 <template>
   <main>
     <div>
+      <div>
+        <el-space>
+          <el-tree-select v-model="value" :data="data.treeData" :render-after-expand="false" check-strictly=true
+                          lazy:load="load"
+                          @change="listFileInfo"/>
 
-      <el-tree-select v-model="value" :data="data.treeData" :render-after-expand="false"/>
+          <el-button type="primary" @click="openDialog">Open Dialog</el-button>
+        </el-space>
+      </div>
+
       <el-divider content-position="center"/>
-      show checkbox:
-      <el-tree-select
-          v-model="value"
-          :data="data.treeData"
-          :render-after-expand="false"
-          show-checkbo
-      />
-      <button class="btn" @click="openDialog">openDialog</button>
+      <el-text class="result" type="info">{{ data.currentPath }}</el-text>
+      <el-table :data="data.tableData" style="width: 100%">
+        <el-table-column label="Name" prop="name"/>
+        <el-table-column label="Date" prop="date"/>
+        <el-table-column label="Size" prop="size"/>
+      </el-table>
+
     </div>
   </main>
 

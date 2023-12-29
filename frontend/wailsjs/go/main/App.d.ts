@@ -4,4 +4,6 @@ import {model} from '../models';
 
 export function Greet(arg1: string): Promise<string>;
 
+export function ListFileInfo(arg1: string): Promise<Array<model.FileInfo>>;
+
 export function OpenFileDialog(): Promise<Array<model.TreeNode>>;

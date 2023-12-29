@@ -6,6 +6,10 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function ListFileInfo(arg1) {
+  return window['go']['main']['App']['ListFileInfo'](arg1);
+}
+
 export function OpenFileDialog() {
   return window['go']['main']['App']['OpenFileDialog']();
 }
