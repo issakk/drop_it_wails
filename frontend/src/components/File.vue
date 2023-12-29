@@ -1,14 +1,21 @@
 <script setup>
-import {reactive, ref} from 'vue'
+import {h, reactive, ref} from 'vue'
 import * as App from '../../wailsjs/go/main/App'
+import {ElNotification} from "element-plus";
 
 const value = ref()
-
+const success = (count) => {
+  ElNotification({
+    title: '整理完毕!',
+    message: h('i', {style: 'color: teal'}, 'success 整理了' + count + '个文件'),
+  })
+}
 const data = reactive({
   name: "",
   resultText: "Please enter your name below 👇",
   treeData: [],
   tableData: [],
+  percentage: 0,
   currentPath: "",
 })
 
@@ -18,6 +25,21 @@ function listFileInfo(path) {
   App.ListFileInfo(value.value).then(result => {
     data.tableData = result;
     data.currentPath = path;
+  })
+}
+
+function drop(path) {
+  data.percentage = 0
+  if (path === "" || path == null) {
+    console.log("null")
+    return
+  }
+  data.percentage = 50
+  App.Drop(path).then(result => {
+    if (result >= 0) {
+      data.percentage = 100
+      success(result)
+    }
   })
 }
 
@@ -33,23 +55,31 @@ function openDialog() {
 <template>
   <main>
     <div>
-      <div>
+      <div style="margin: 10px">
         <el-space>
           <el-tree-select v-model="value" :data="data.treeData" :render-after-expand="false" check-strictly=true
                           lazy:load="load"
                           @change="listFileInfo"/>
 
           <el-button type="primary" @click="openDialog">Open Dialog</el-button>
+          <el-button type="danger" @click="drop(data.currentPath)">DROP IT!</el-button>
+
         </el-space>
       </div>
 
-      <el-divider content-position="center"/>
-      <el-text class="result" type="info">{{ data.currentPath }}</el-text>
-      <el-table :data="data.tableData" style="width: 100%">
-        <el-table-column label="Name" prop="name"/>
-        <el-table-column label="Date" prop="date"/>
-        <el-table-column label="Size" prop="size"/>
-      </el-table>
+      <div style="margin: 10px">
+        <el-progress :percentage="data.percentage" :stroke-width="26" :text-inside="true"/>
+      </div>
+
+      <div>
+        <el-divider content-position="center"/>
+        <el-text class="result" type="info">当前选择路径:{{ data.currentPath }}</el-text>
+        <el-table :data="data.tableData" border=border>
+          <el-table-column label="Name" prop="name"/>
+          <el-table-column label="Date" prop="date"/>
+          <el-table-column label="Size" prop="size"/>
+        </el-table>
+      </div>
 
     </div>
   </main>
@@ -73,6 +103,7 @@ function openDialog() {
   padding: 0 8px;
   cursor: pointer;
 }
+
 
 .input-box .btn:hover {
   background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
