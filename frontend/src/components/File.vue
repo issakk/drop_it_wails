@@ -39,6 +39,7 @@ function drop(path) {
     if (result >= 0) {
       data.percentage = 100
       success(result)
+      listFileInfo(path)
     }
   })
 }
@@ -47,6 +48,10 @@ function openDialog() {
   console.log("openDialog")
   App.OpenFileDialog().then(result => {
     data.treeData = result;
+    if (result && result.length > 0) {
+      value.value = result[0].value;
+      listFileInfo(result[0].value);
+    }
   })
 }
 

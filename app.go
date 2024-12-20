@@ -15,14 +15,14 @@ import (
 )
 
 var fileMap = map[string][]string{
-	"图片":    {"png", "jpg", "jpeg", "gif", "bmp", "tiff", "svg", "ico"},
-	"电子书":   {"pdf", "mobi", "azw3", "epub", "djvu", "cbz", "cbr"},
-	"文档资料":  {"txt", "md", "doc", "docx", "xlsx", "csv", "ppt", "pptx", "rtf", "odt", "ods", "odp"},
-	"压缩包":   {"zip", "rar", "7z", "tar", "gz", "bz2", "xz"},
-	"音频":    {"mp3", "wmv", "m4a", "flac", "wav", "ogg", "aac", "m4b"},
-	"视频":    {"mp4", "mkv", "mov", "flv", "wmv", "rmvb"},
-	"exe程序": {"exe", "sh", "bat", "py", "jar", "app", "dmg", "msi", "apk", "ipa"},
-	"编程相关":  {"out", "log", "json", "yml", "yaml"},
+	"图片":    {"png", "jpg", "jpeg", "gif", "bmp", "tiff", "svg", "ico", "webp", "psd", "raw", "heic"},
+	"电子书":   {"pdf", "mobi", "azw3", "epub", "djvu", "cbz", "cbr", "txt", "chm"},
+	"文档资料":  {"txt", "md", "doc", "docx", "xlsx", "csv", "ppt", "pptx", "rtf", "odt", "ods", "odp", "pages", "numbers", "key", "one", "xls", "xmind", "mindnode"},
+	"压缩包":   {"zip", "rar", "7z", "tar", "gz", "bz2", "xz", "iso", "pkg"},
+	"音频":    {"mp3", "wmv", "m4a", "flac", "wav", "ogg", "aac", "m4b", "ape", "aiff", "wma", "opus"},
+	"视频":    {"mp4", "mkv", "mov", "flv", "wmv", "rmvb", "avi", "m4v", "webm", "3gp", "ts", "f4v"},
+	"exe程序": {"exe", "sh", "bat", "py", "jar", "app", "dmg", "msi", "apk", "ipa", "deb", "rpm", "run", "bin"},
+	"编程相关":  {"out", "log", "json", "yml", "yaml", "xml", "sql", "db", "sqlite", "ini", "conf", "config", "properties", "env", "toml"},
 }
 
 // App struct
@@ -107,87 +107,106 @@ func (a *App) ListFileInfo(path string) []model.FileInfo {
 	})
 }
 
-func fileIsExisted(filename string) bool {
-	existed := true
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		existed = false
+func (a *App) Drop(path string) (int, error) {
+	files, err := readFiles(path)
+	if err != nil {
+		return 0, fmt.Errorf("读取文件失败: %w", err)
 	}
-	return existed
+	return copyFiles(files, path)
 }
-func copyFiles(m map[string][]fs.FileInfo, path string) int {
+
+func copyFiles(m map[string][]fs.FileInfo, path string) (int, error) {
 	count := 0
 	backupPath := filepath.Join(path, "备份")
-	if createDirIfNotExist(backupPath) {
-		fmt.Println("创建备份目录成功")
-		return count
+
+	if err := ensureDir(backupPath); err != nil {
+		return 0, fmt.Errorf("创建备份目录失败: %w", err)
 	}
 
-	for k, v := range m {
-		tempPath := filepath.Join(path, k)
-		createDirIfNotExist(tempPath)
-		for _, i := range v {
-			oldPath := filepath.Join(path, i.Name())
-			file, _ := ioutil.ReadFile(oldPath)
+	for category, files := range m {
+		categoryPath := filepath.Join(path, category)
+		if err := ensureDir(categoryPath); err != nil {
+			return 0, fmt.Errorf("创建分类目录失败: %w", err)
+		}
 
-			err := ioutil.WriteFile(filepath.Join(tempPath, i.Name()), file, os.ModePerm)
-			if err != nil {
-				fmt.Println(err)
-				return -1
+		for _, fileInfo := range files {
+			if err := moveFile(path, categoryPath, backupPath, fileInfo); err != nil {
+				return count, err
 			}
-			err = os.Rename(oldPath, filepath.Join(backupPath, i.Name()))
 			count++
-			if err != nil {
-				fmt.Println(err)
-				return -1
-			}
-
 		}
 	}
-	return count
+	return count, nil
 }
 
-func createDirIfNotExist(backupPath string) bool {
-	if !fileIsExisted(backupPath) {
-		err := os.Mkdir(backupPath, fs.ModeDir)
-		if err != nil {
-			fmt.Println(err)
-			return true
-		}
+func moveFile(basePath, categoryPath, backupPath string, fileInfo fs.FileInfo) error {
+	fileName := fileInfo.Name()
+	oldPath := filepath.Join(basePath, fileName)
+
+	// 先复制到分类目录
+	if err := copyFileToDir(oldPath, categoryPath); err != nil {
+		return fmt.Errorf("复制文件失败: %w", err)
 	}
-	return false
+
+	// 再移动到备份目录
+	if err := os.Rename(oldPath, filepath.Join(backupPath, fileName)); err != nil {
+		return fmt.Errorf("移动到备份目录失败: %w", err)
+	}
+
+	return nil
 }
 
-func (a *App) Drop(path string) int {
-	return copyFiles(readFiles(path), path)
+func copyFileToDir(src, dstDir string) error {
+	data, err := ioutil.ReadFile(src)
+	if err != nil {
+		return err
+	}
 
+	dst := filepath.Join(dstDir, filepath.Base(src))
+	return ioutil.WriteFile(dst, data, os.ModePerm)
 }
-func readFiles(path string) map[string][]fs.FileInfo {
+
+func ensureDir(path string) error {
+	if exists, err := pathExists(path); err != nil {
+		return err
+	} else if !exists {
+		return os.MkdirAll(path, 0755)
+	}
+	return nil
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func readFiles(path string) (map[string][]fs.FileInfo, error) {
 	m := make(map[string][]fs.FileInfo)
-	dir, _ := ioutil.ReadDir(path)
-	for _, i := range dir {
-		name := i.Name()
-		if i.IsDir() {
+
+	dir, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("读取目录失败: %w", err)
+	}
+
+	for _, fileInfo := range dir {
+		if fileInfo.IsDir() {
 			continue
 		}
-		ext := filepath.Ext(name)
-		// 去掉扩展名前面的点号
-		if strings.Contains(ext, ".") {
-			ext = ext[1:]
-		}
-		for index, v := range fileMap {
-			if lo.Contains(v, ext) {
-				//fmt.Println(name, "是个", index)
-				infos, ok := m[index]
-				if !ok {
-					infos = make([]fs.FileInfo, 0, 0)
 
-				}
-				infos = append(infos, i)
-				m[index] = infos
+		ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(fileInfo.Name()), "."))
+
+		for category, extensions := range fileMap {
+			if lo.Contains(extensions, ext) {
+				m[category] = append(m[category], fileInfo)
+				break
 			}
 		}
-		//fmt.Println(name+" 是文件夹 ", i.IsDir())
-
 	}
-	return m
+	return m, nil
 }
