@@ -53,81 +53,62 @@ function openDialog() {
 </script>
 
 <template>
-  <main>
-    <div>
-      <div style="margin: 10px">
-        <el-space>
-          <el-tree-select v-model="value" :data="data.treeData" :render-after-expand="false" check-strictly=true
-                          lazy:load="load"
-                          @change="listFileInfo"/>
+  <main class="file-manager">
+    <div class="file-manager__controls">
+      <el-space>
+        <el-tree-select 
+          v-model="value" 
+          :data="data.treeData" 
+          :render-after-expand="false"
+          check-strictly="true"
+          lazy:load="load"
+          @change="listFileInfo"
+        />
+        <el-button type="primary" @click="openDialog">Open Dialog</el-button>
+        <el-button type="danger" @click="drop(data.currentPath)">DROP IT!</el-button>
+      </el-space>
+    </div>
 
-          <el-button type="primary" @click="openDialog">Open Dialog</el-button>
-          <el-button type="danger" @click="drop(data.currentPath)">DROP IT!</el-button>
+    <div class="file-manager__progress">
+      <el-progress 
+        :percentage="data.percentage" 
+        :stroke-width="26" 
+        :text-inside="true"
+      />
+    </div>
 
-        </el-space>
-      </div>
-
-      <div style="margin: 10px">
-        <el-progress :percentage="data.percentage" :stroke-width="26" :text-inside="true"/>
-      </div>
-
-      <div>
-        <el-divider content-position="center"/>
-        <el-text class="result" type="info">当前选择路径:{{ data.currentPath }}</el-text>
-        <el-table :data="data.tableData" border=border>
-          <el-table-column label="Name" prop="name"/>
-          <el-table-column label="Date" prop="date"/>
-          <el-table-column label="Size" prop="size"/>
-        </el-table>
-      </div>
-
+    <div class="file-manager__content">
+      <el-divider content-position="center"/>
+      <el-text class="current-path" type="info">
+        当前选择路径:{{ data.currentPath }}
+      </el-text>
+      <el-table :data="data.tableData" border>
+        <el-table-column label="Name" prop="name"/>
+        <el-table-column label="Date" prop="date"/>
+        <el-table-column label="Size" prop="size"/>
+      </el-table>
     </div>
   </main>
-
 </template>
 
 <style scoped>
-.result {
-  height: 20px;
+.file-manager {
+  padding: 20px;
+}
+
+.file-manager__controls {
+  margin-bottom: 20px;
+}
+
+.file-manager__progress {
+  margin-bottom: 20px;
+}
+
+.current-path {
+  display: block;
+  margin: 1.5rem 0;
   line-height: 20px;
-  margin: 1.5rem auto;
 }
 
-.input-box .btn {
-  width: 60px;
-  height: 30px;
-  line-height: 30px;
-  border-radius: 3px;
-  border: none;
-  margin: 0 0 0 20px;
-  padding: 0 8px;
-  cursor: pointer;
-}
-
-
-.input-box .btn:hover {
-  background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-  color: #333333;
-}
-
-.input-box .input {
-  border: none;
-  border-radius: 3px;
-  outline: none;
-  height: 30px;
-  line-height: 30px;
-  padding: 0 10px;
-  background-color: rgba(240, 240, 240, 1);
-  -webkit-font-smoothing: antialiased;
-}
-
-.input-box .input:hover {
-  border: none;
-  background-color: rgba(255, 255, 255, 1);
-}
-
-.input-box .input:focus {
-  border: none;
-  background-color: rgba(255, 255, 255, 1);
-}
+/* 删除未使用的 input-box 相关样式 */
 </style>

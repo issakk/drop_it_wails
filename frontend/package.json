@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "element-plus": "^2.4.4",
+    "frontend": "file:",
     "vue": "^3.2.37"
   },
   "devDependencies": {
