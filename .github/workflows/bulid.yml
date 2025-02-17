@@ -2,6 +2,7 @@ name: Wails Build
 
 on:
   # Allows workflow to be manually triggered.
+  push: 
   workflow_dispatch:
     inputs:
       logLevel:
@@ -31,6 +32,6 @@ jobs:
 
       - uses: The-Egg-Corp/wails-build-action@v1.4
         with:
-          build-name: dropit
+          build-name: dropit.app
           build-platform: windows/amd64
           nsis: false 
