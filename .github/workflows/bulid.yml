@@ -32,6 +32,6 @@ jobs:
 
       - uses: The-Egg-Corp/wails-build-action@v1.4
         with:
-          build-name: dropit.app
+          build-name: dropit.exe
           build-platform: windows/amd64
           nsis: false 
