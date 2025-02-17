@@ -49,7 +49,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/dropit.git
+git clone https://github.com/issakk/drop_it_wails.git
 
 # 安装依赖
 cd dropit
