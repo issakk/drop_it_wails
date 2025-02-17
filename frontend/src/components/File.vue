@@ -105,6 +105,9 @@ function openDialog() {
         stripe
         style="margin-top: 20px"
         v-loading="data.percentage > 0 && data.percentage < 100"
+        height="400"
+        :virtual-scrolling="true"
+        :item-size="40"
       >
         <el-table-column label="文件名" prop="name" min-width="200"/>
         <el-table-column label="修改时间" prop="date" width="180"/>
