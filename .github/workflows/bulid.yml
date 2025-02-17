@@ -15,7 +15,7 @@ on:
         type: boolean
         required: true
         default: false
-      package: 
+      package:
         description: "Upload artifacts"
         type: boolean
         required: false
@@ -23,14 +23,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        build: [
-          {name: "App", platform: windows/amd64, os: windows-latest}
-        ]
-
-    runs-on: ${{ matrix.build.os }}
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,5 +31,6 @@ jobs:
 
       - uses: The-Egg-Corp/wails-build-action@v1.4
         with:
-          build-name: ${{ matrix.build.name }}
-          build-platform: ${{ matrix.build.platform }}
+          build-name: dropit
+          build-platform: windows/amd64
+          nsis: false 
