@@ -2,6 +2,7 @@
 import {h, reactive, ref} from 'vue'
 import * as App from '../../wailsjs/go/main/App'
 import {ElNotification} from "element-plus";
+import {Folder, Download, FolderOpened} from '@element-plus/icons-vue'
 
 const value = ref()
 const success = (count) => {
