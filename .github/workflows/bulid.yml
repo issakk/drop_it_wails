@@ -8,15 +8,14 @@ jobs:
       fail-fast: false
       matrix:
         build: [
-          {name: wailsTest, platform: windows/amd64, os: windows-latest}
+          {name: wailsTest, platform: windows/amd64, os: windows-latest},
         ]
     runs-on: ${{ matrix.build.os }}
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - uses: dAppServer/wails-build-action@v3
+      - uses: dAppServer/wails-build-action@v2.1
         with:
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
-          build-obfuscate: true
