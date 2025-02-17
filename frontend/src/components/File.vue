@@ -3,6 +3,7 @@ import {h, reactive, ref} from 'vue'
 import * as App from '../../wailsjs/go/main/App'
 import {ElNotification} from "element-plus";
 import {Folder, Download, FolderOpened} from '@element-plus/icons-vue'
+import { debounce } from 'lodash-es'
 
 const value = ref()
 const success = (count) => {
@@ -20,14 +21,15 @@ const data = reactive({
   currentPath: "",
 })
 
-function listFileInfo(path) {
+// 将 listFileInfo 改为防抖函数
+const listFileInfo = debounce((path) => {
   console.log("listFiles")
   console.log(path)
   App.ListFileInfo(value.value).then(result => {
     data.tableData = result;
     data.currentPath = path;
   })
-}
+}, 300)
 
 function drop(path) {
   data.percentage = 0
