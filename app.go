@@ -8,10 +8,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"  // 添加这行
 	"strings"
+	"sync"     // 添加这行
+	"sync/atomic"  // 添加这行
 
 	"github.com/samber/lo"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"  // 重命名避免冲突
 )
 
 var fileMap = map[string][]string{
@@ -80,7 +83,7 @@ func (a *App) Greet(name string) string {
 }
 func (a *App) OpenFileDialog() []model.TreeNode {
 	fmt.Println("openDialog")
-	path, _ := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+	path, _ := wailsRuntime.OpenDirectoryDialog(a.ctx, wailsRuntime.OpenDialogOptions{})
 	//dir, _ := os.ReadDir(path)
 	//dirList := lo.Filter(dir, func(item os.DirEntry, index int) bool {
 	//	info, _ := item.Info()
@@ -139,15 +142,55 @@ func (a *App) ListFileInfo(path string) []model.FileInfo {
 		return model.FileInfo{Name: info.Name(), Size: info.Size(), Date: info.ModTime().Format("2006-01-02 15:04:05")}
 	})
 }
+func (a *App) Drop(path string) (int64, error) {
+    files := a.ListFileInfo(path)  // 移除 err 变量，因为 ListFileInfo 只返回一个值
+    
+    var wg sync.WaitGroup
+    var processedCount int64
+    
+    // 限制并发数为 CPU 核心数
+    semaphore := make(chan struct{}, runtime.NumCPU())
+    
+    for _, file := range files {
+        wg.Add(1)
+        semaphore <- struct{}{} // 获取信号量
+        
+        go func(fileInfo model.FileInfo) {
+            defer func() {
+                <-semaphore // 释放信号量
+                wg.Done()
+            }()
+            
+            // 获取文件扩展名并创建目标目录
+            ext := filepath.Ext(fileInfo.Name)
+            if ext == "" {
+                return
+            }
+            
+            targetDir := filepath.Join(path, ext[1:])
+            if err := os.MkdirAll(targetDir, 0755); err != nil {
+                return
+            }
 
-func (a *App) Drop(path string) (int, error) {
-	files, err := readFiles(path)
-	if err != nil {
-		return 0, fmt.Errorf("读取文件失败: %w", err)
-	}
-	return copyFiles(files, path)
+            // 移动文件
+            srcPath := filepath.Join(path, fileInfo.Name)
+            dstPath := filepath.Join(targetDir, fileInfo.Name)
+            if err := os.Rename(srcPath, dstPath); err != nil {
+                return
+            }
+
+            atomic.AddInt64(&processedCount, 1)
+            
+            // 计算并发送进度
+            progress := float64(atomic.LoadInt64(&processedCount)) / float64(len(files)) * 100
+            wailsRuntime.EventsEmit(a.ctx, "file-progress", progress)  // 使用重命名后的包
+            
+        }(file)
+    }
+
+    wg.Wait()
+    return atomic.LoadInt64(&processedCount), nil
 }
-
 func copyFiles(m map[string][]fs.FileInfo, path string) (int, error) {
 	count := 0
 	backupPath := filepath.Join(path, "备份")
