@@ -148,7 +148,12 @@ func (a *App) Drop(path string) (int64, error) {
     var wg sync.WaitGroup
     var processedCount int64
     
-    // 限制并发数为 CPU 核心数
+    // 创建备份目录
+    backupPath := filepath.Join(path, "备份")
+    if err := os.MkdirAll(backupPath, 0755); err != nil {
+        return 0, fmt.Errorf("创建备份目录失败: %w", err)
+    }
+    
     semaphore := make(chan struct{}, runtime.NumCPU())
     
     for _, file := range files {
@@ -160,28 +165,44 @@ func (a *App) Drop(path string) (int64, error) {
                 <-semaphore // 释放信号量
                 wg.Done()
             }()
-            
             // 获取文件扩展名并创建目标目录
-            ext := filepath.Ext(fileInfo.Name)
+            // 获取文件扩展名
+            ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(fileInfo.Name), "."))
             if ext == "" {
                 return
             }
             
-            targetDir := filepath.Join(path, ext[1:])
+            // 查找文件类别
+            var category string
+            for cat, extensions := range fileMap {
+                if lo.Contains(extensions, ext) {
+                    category = cat
+                    break
+                }
+            }
+            
+            // 如果没找到对应分类则跳过
+            if category == "" {
+                return
+            }
+            
+            // 使用分类名创建目标目录
+            targetDir := filepath.Join(path, category)
             if err := os.MkdirAll(targetDir, 0755); err != nil {
                 return
             }
-
-            // 移动文件
+            // 先复制到分类目录
             srcPath := filepath.Join(path, fileInfo.Name)
-            dstPath := filepath.Join(targetDir, fileInfo.Name)
-            if err := os.Rename(srcPath, dstPath); err != nil {
+            if err := copyFileToDir(srcPath, targetDir); err != nil {
+                return
+            }
+            
+            // 再移动到备份目录
+            if err := os.Rename(srcPath, filepath.Join(backupPath, fileInfo.Name)); err != nil {
                 return
             }
 
             atomic.AddInt64(&processedCount, 1)
-            
-            // 计算并发送进度
             progress := float64(atomic.LoadInt64(&processedCount)) / float64(len(files)) * 100
             wailsRuntime.EventsEmit(a.ctx, "file-progress", progress)  // 使用重命名后的包
             
