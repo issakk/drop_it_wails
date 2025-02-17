@@ -60,7 +60,7 @@ function openDialog() {
 <template>
   <main class="file-manager">
     <div class="file-manager__controls">
-      <el-space>
+      <el-space size="large" alignment="center">
         <el-tree-select 
           v-model="value" 
           :data="data.treeData" 
@@ -68,29 +68,46 @@ function openDialog() {
           check-strictly="true"
           lazy:load="load"
           @change="listFileInfo"
+          placeholder="请选择文件夹"
+          style="width: 300px"
         />
-        <el-button type="primary" @click="openDialog">Open Dialog</el-button>
-        <el-button type="danger" @click="drop(data.currentPath)">DROP IT!</el-button>
+        <el-button type="primary" :icon="Folder" @click="openDialog">选择文件夹</el-button>
+        <el-button type="danger" :icon="Download" @click="drop(data.currentPath)">开始整理</el-button>
       </el-space>
     </div>
 
-    <div class="file-manager__progress">
+    <div class="file-manager__progress" v-show="data.percentage > 0">
       <el-progress 
         :percentage="data.percentage" 
-        :stroke-width="26" 
+        :stroke-width="20" 
         :text-inside="true"
+        status="success"
       />
     </div>
 
     <div class="file-manager__content">
-      <el-divider content-position="center"/>
-      <el-text class="current-path" type="info">
-        当前选择路径:{{ data.currentPath }}
-      </el-text>
-      <el-table :data="data.tableData" border>
-        <el-table-column label="Name" prop="name"/>
-        <el-table-column label="Date" prop="date"/>
-        <el-table-column label="Size" prop="size"/>
+      <el-card class="path-card" shadow="hover">
+        <template #header>
+          <div class="path-header">
+            <el-icon><FolderOpened /></el-icon>
+            <span>当前路径</span>
+          </div>
+        </template>
+        <el-text class="current-path" type="info">
+          {{ data.currentPath || '未选择文件夹' }}
+        </el-text>
+      </el-card>
+
+      <el-table 
+        :data="data.tableData" 
+        border 
+        stripe
+        style="margin-top: 20px"
+        v-loading="data.percentage > 0 && data.percentage < 100"
+      >
+        <el-table-column label="文件名" prop="name" min-width="200"/>
+        <el-table-column label="修改时间" prop="date" width="180"/>
+        <el-table-column label="大小" prop="size" width="120"/>
       </el-table>
     </div>
   </main>
@@ -98,22 +115,44 @@ function openDialog() {
 
 <style scoped>
 .file-manager {
-  padding: 20px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .file-manager__controls {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
 }
 
 .file-manager__progress {
-  margin-bottom: 20px;
+  margin: 24px 0;
+  transition: all 0.3s ease;
+}
+
+.path-card {
+  margin-top: 24px;
+}
+
+.path-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .current-path {
   display: block;
-  margin: 1.5rem 0;
-  line-height: 20px;
+  line-height: 1.5;
+  word-break: break-all;
 }
 
-/* 删除未使用的 input-box 相关样式 */
+:deep(.el-table) {
+  --el-table-header-bg-color: var(--el-color-primary-light-8);
+  border-radius: 8px;
+}
+
+:deep(.el-card) {
+  border-radius: 8px;
+}
 </style>
